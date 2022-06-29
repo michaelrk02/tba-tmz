@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+h1, h2, h3, h4, h5, h6 { @apply font-bold mb-4; }
+h1 { @apply text-5xl; }
+h2 { @apply text-4xl; }
+h3 { @apply text-3xl; }
+h4 { @apply text-2xl; }
+h5 { @apply text-xl; }
+h6 { @apply text-lg; }
+
+.tmz-panel {
+    @apply p-4;
+    @apply bg-secondary text-light;
+    @apply rounded-lg shadow-md;
+}
+
+.tmz-display {
+    @apply p-2;
+    @apply font-mono font-bold;
+    color: white;
+    background-color: black;
+}
+
+.tmz-display-cell-head {
+    color: black !important;
+    background-color: white !important;
+}
+
+.tmz-display-port {
+    @apply p-2;
+    @apply bg-primary;
+    @apply font-bold text-light;
+    @apply rounded shadow;
+}
+
+.tmz-display-port-external {
+    @apply bg-tertiary !important;
+}
+
+.tmz-button {
+    @apply inline-block p-2;
+    @apply bg-tertiary text-dark font-bold;
+    @apply rounded shadow;
+    @apply hover:bg-tertiary/80 active:bg-tertiary/60;
+}
+
+.tmz-button-toggled {
+    @apply bg-tertiary/80;
+}
+
