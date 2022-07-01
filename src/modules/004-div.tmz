@@ -1,0 +1,118 @@
+; @module div
+
+; @morphett
+0 * * * CDZ0
+
+; @start CDZ0
+
+;
+; CDZ : check division by zero
+;
+
+CDZ0 + + R CDZ0
+CDZ0 - - R CDZ0
+CDZ0 1 1 R CDZ0
+CDZ0 # # R CDZ1
+
+CDZ1 1 1 L CDZ2
+CDZ1 # _ L DVZ0
+
+CDZ2 1 1 L CDZ2
+CDZ2 # # L CDZ2
+CDZ2 + + L CDZ2
+CDZ2 - - L CDZ2
+CDZ2 _ _ R CHK1
+
+;
+; DVZ : division by zero error
+;
+
+DVZ0 1 _ L DVZ0
+DVZ0 # _ L DVZ0
+DVZ0 + _ L DVZ0
+DVZ0 - _ L DVZ0
+DVZ0 _ ? L HALT
+
+;
+; CHK : check magnitude
+;
+
+CHK1 + _ R CHK2
+CHK1 - _ R CHK3
+
+CHK2 + _ R POS0
+CHK2 - _ R NEG0
+
+CHK3 + _ R NEG0
+CHK3 - _ R POS0
+
+;
+; POS : positive result
+;
+
+POS0 1 1 R POS0
+POS0 # # R POS0
+POS0 _ + L SET0
+
+;
+; NEG : negative result
+;
+
+NEG0 1 1 R NEG0
+NEG0 # # R NEG0
+NEG0 _ - L SET0
+
+;
+; SET : initial setup
+;
+
+SET0 1 1 L SET0
+SET0 # # L SET0
+SET0 _ _ R DIV1
+
+;
+; DIV : perform division
+;
+
+DIV1 1 1 R DIV1
+DIV1 # # R DIV2
+
+DIV2 1 1 R DIV2
+DIV2 # # L DIV3
+
+DIV3 1 X L DIV4
+DIV3 # # R DIV8
+
+DIV4 1 1 L DIV4
+DIV4 # # L DIV5
+
+DIV5 Y Y L DIV5
+DIV5 1 Y R DIV6
+DIV5 _ _ R DIV11
+
+DIV6 Y Y R DIV6
+DIV6 # # R DIV7
+
+DIV7 1 1 R DIV7
+DIV7 X X L DIV3
+
+DIV8 X 1 R DIV8
+DIV8 # # R DIV9
+
+DIV9 1 1 R DIV9
+DIV9 + + R DIV9
+DIV9 - - R DIV9
+DIV9 _ 1 L DIV10
+
+DIV10 1 1 L DIV10
+DIV10 + + L DIV10
+DIV10 - - L DIV10
+DIV10 # # L DIV3
+
+DIV11 Y _ R DIV11
+DIV11 # _ R DIV12
+
+DIV12 1 _ R DIV12
+DIV12 X _ R DIV12
+DIV12 # _ R HALT
+

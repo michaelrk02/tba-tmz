@@ -1,0 +1,51 @@
+; @module log
+
+; @morphett
+0 * * * DIV0
+
+; @start DIV0
+
+;
+; DIV : divide into two sections
+;
+
+
+DIV0 1 X R DIV1
+DIV0 Y Y L HLF0
+
+DIV1 1 1 R DIV1
+DIV1 Y Y L DIV2
+DIV1 # # L DIV2
+
+DIV2 1 Y L DIV3
+DIV2 X _ R END0
+
+DIV3 1 1 L DIV3
+DIV3 X X R DIV0
+
+;
+; HLF : slice into half
+;
+
+HLF0 X X L HLF0
+HLF0 _ _ R HLF1
+
+HLF1 X _ R HLF1
+HLF1 Y 1 R HLF2
+
+HLF2 Y 1 R HLF2
+HLF2 # # R HLF3
+
+HLF3 1 1 R HLF3
+HLF3 _ 1 L HLF4
+
+HLF4 1 1 L HLF4
+HLF4 # # L HLF4
+HLF4 _ _ R DIV0
+
+;
+; END = end the operation
+;
+
+END0 # _ R HALT
+

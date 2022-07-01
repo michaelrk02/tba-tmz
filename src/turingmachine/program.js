@@ -1,13 +1,21 @@
+import Module from './module.js';
+
 export default class Program {
 
-    constructor() {
+    constructor(name, format) {
+        this.name = name;
         this.tape = null;
-        this.head = null;
-        this.state = null;
-        this.module = null;
+        this.head = 0;
+        this.counter = 0;
+        this.routineAddress = null;
+        this.routines = [];
+        this.halted = true;
+        this.instructionLog = [];
+        this.format = format;
 
-        this.onInit = [];
         this.onStart = [];
+        this.onRoutineExecute = [];
+        this.onRoutineClock = [];
         this.onChangeTape = [];
         this.onChangeHead = [];
         this.onChangeState = [];
@@ -15,8 +23,21 @@ export default class Program {
         this.onAfterTransition = [];
         this.onHalt = [];
 
-        this.setTape(new Tape());
-        this.setHead(0);
+        this.onAfterTransition.push((function(t) {
+            this.instructionLog.push('#' + this.counter + ' [' + this.routine().name + '] ' + Program.formatTransition(t));
+        }).bind(this));
+
+        this.reset(new Tape(), 0);
+    }
+
+    state() {
+        if (this.routine() === null) {
+            return '<HALT>';
+        }
+        if (this.routine().type === 'callback') {
+            return '<EXEC>';
+        }
+        return this.routine().state !== null ? this.routine().state : '<NULL>';
     }
 
     setTape(tape) {
@@ -37,74 +58,362 @@ export default class Program {
         }
     }
 
-    setState(state) {
-        let previous = this.state;
-        this.state = state;
-        let next = this.state;
-        for (let callback of this.onChangeState) {
-            callback(previous, next);
+    reset(tape, head) {
+        for (let routine of this.routines) {
+            if (routine.type === 'module') {
+                routine.state = null;
+            }
         }
+
+        this.counter = 0;
+        this.routineAddress = null;
+        this.halted = true;
+        this.instructionLog = [];
+
+        this.setTape(tape);
+        this.setHead(head);
     }
 
-    setModule(module) {
-        let previous = this.module;
-        this.module = module;
-        let next = this.module;
-        for (let callback of this.onInit) {
-            callback(previous, next);
+    routine() {
+        if (this.routineAddress === null) {
+            return null;
         }
+        if (this.routineAddress >= this.routines.length) {
+            return null;
+        }
+        return this.routines[this.routineAddress];
     }
 
     run() {
-        this.state = this.module.start;
+        this.halted = false;
+        this.counter = 0;
         for (let callback of this.onStart) {
             callback();
         }
+
+        this.routineAddress = 0;
+        this.executeRoutine();
     }
 
-    cur() {
-        return this.module.states[this.state];
+    executeRoutine() {
+        if (this.routine() !== null) {
+            this.routine().execute(this);
+        }
+    }
+
+    running() {
+        return (this.routine() !== null) && this.routine().running;
     }
 
     read() {
         return this.tape.at(this.head);
     }
 
-    transition() {
+    step() {
+        if (this.routine() !== null) {
+            if (!this.routine().running) {
+                this.routineAddress++;
+                this.executeRoutine();
+                if (this.routine() === null) {
+                    this.halted = true;
+                    for (let callback of this.onHalt) {
+                        callback();
+                    }
+                    return;
+                }
+            }
+            this.counter++;
+            this.routine().clock(this);
+        }
+    }
+
+    static formatTransition(t) {
+        const movement = {
+            stay: 'S',
+            left: 'L',
+            right: 'R'
+        };
+        return t === null ? '<ROUTINE CLOCK>' : '' + t.cur + ' -> ' + t.next + ' : ' + (t.read === null ? '_' : t.read) + ' / ' + (t.replace === null ? '_' : t.replace) + ' , ' + movement[t.move];
+    }
+
+    static _addition = null;
+    static addition() {
+        if (Program._addition === null) {
+            Program._addition = new Program('Addition', /^[+-]{2} 1*#1*$/);
+            Program._addition.routines.push(new ModuleRoutine(Module.add()));
+        }
+        return Program._addition;
+    }
+
+    static _subtraction = null;
+    static subtraction() {
+        if (Program._subtraction === null) {
+            Program._subtraction = new Program('Subtraction', /^[+-]{2} 1*#1*$/);
+            Program._subtraction.routines.push(new ModuleRoutine(Module.sub()));
+        }
+        return Program._subtraction;
+    }
+
+    static _multiplication = null;
+    static multiplication() {
+        if (Program._multiplication === null) {
+            Program._multiplication = new Program('Multiplication', /^[+-]{2}1*#1*#$/);
+            Program._multiplication.routines.push(new ModuleRoutine(Module.mul()));
+        }
+        return Program._multiplication;
+    }
+
+    static _division = null;
+    static division() {
+        if (Program._division === null) {
+            Program._division = new Program('Division', /^[+-]{2}1*#1*#$/);
+            Program._division.routines.push(new ModuleRoutine(Module.div()));
+        }
+        return Program._division;
+    }
+
+    static _factorial = null;
+    static factorial() {
+        if (Program._factorial === null) {
+            Program._factorial = new Program('Factorial', /^1+$/);
+            Program._factorial.routines.push(new ModuleRoutine(Module.fac()));
+        }
+        return Program._factorial;
+    }
+
+    static _power = null;
+    static power() {
+        if (Program._power === null) {
+            Program._power = new Program('Power', /^1+#1+#$/);
+            Program._power.routines.push(new ModuleRoutine(Module.pow()));
+        }
+        return Program._power;
+    }
+
+    static _binaryLogarithm = null;
+    static binaryLogarithm() {
+        if (Program._binaryLogarithm === null) {
+            Program._binaryLogarithm = new Program('BinaryLogarithm', /^1+#$/);
+            Program._binaryLogarithm.routines.push(new ModuleRoutine(Module.log()));
+        }
+        return Program._binaryLogarithm;
+    }
+
+    static _celciusToKelvin = null;
+    static celciusToKelvin() {
+        if (Program._celciusToKelvin === null) {
+            Program._celciusToKelvin = new Program('CelciusToKelvin', /^[+-]1+$/);
+            Program._celciusToKelvin.routines.push(CallbackRoutine.prepareAddSub('cncadd273', 273));
+            Program._celciusToKelvin.routines.push(new ModuleRoutine(Module.add()));
+        }
+        return Program._celciusToKelvin;
+    }
+
+    static _kelvinToCelcius = null;
+    static kelvinToCelcius() {
+        if (Program._kelvinToCelcius === null) {
+            Program._kelvinToCelcius = new Program('KelvinToCelcius', /^[+-]1+$/);
+            Program._celciusToKelvin.routines.push(CallbackRoutine.prepareAddSub('cncsub273', 273));
+            Program._kelvinToCelcius.routines.push(new ModuleRoutine(Module.sub()));
+        }
+        return Program._kelvinToCelcius;
+    }
+
+    static _celciusToFahrenheit = null;
+    static celciusToFahrenheit() {
+        if (Program._celciusToFahrenheit === null) {
+            Program._celciusToFahrenheit = new Program('CelciusToFahrenheit', /^[+-]1+$/);
+            Program._celciusToFahrenheit.routines.push(CallbackRoutine.prepareMulDiv('cncmul9', 9));
+            Program._celciusToFahrenheit.routines.push(new ModuleRoutine(Module.mul()));
+            Program._celciusToFahrenheit.routines.push(CallbackRoutine.prepareMulDiv('cncdiv5', 5));
+            Program._celciusToFahrenheit.routines.push(new ModuleRoutine(Module.div()));
+            Program._celciusToFahrenheit.routines.push(CallbackRoutine.prepareAddSub('cncadd32', 32));
+            Program._celciusToFahrenheit.routines.push(new ModuleRoutine(Module.add()));
+        }
+        return Program._celciusToFahrenheit;
+    }
+
+    static _fahrenheitToCelcius = null;
+    static fahrenheitToCelcius() {
+        if (Program._fahrenheitToCelcius === null) {
+            Program._fahrenheitToCelcius = new Program('FahrenheitToCelcius', /^[+-]1+$/);
+            Program._fahrenheitToCelcius.routines.push(CallbackRoutine.prepareAddSub('cncsub32', 32));
+            Program._fahrenheitToCelcius.routines.push(new ModuleRoutine(Module.sub()));
+            Program._fahrenheitToCelcius.routines.push(CallbackRoutine.prepareMulDiv('cncmul5', 5));
+            Program._fahrenheitToCelcius.routines.push(new ModuleRoutine(Module.mul()));
+            Program._fahrenheitToCelcius.routines.push(CallbackRoutine.prepareMulDiv('cncdiv9', 9));
+            Program._fahrenheitToCelcius.routines.push(new ModuleRoutine(Module.div()));
+        }
+        return Program._fahrenheitToCelcius;
+    }
+
+    static _kelvinToFahrenheit = null;
+    static kelvinToFahrenheit() {
+        if (Program._kelvinToFahrenheit === null) {
+            Program._kelvinToFahrenheit = new Program('KelvinToFahrenheit', /^[+-]1+$/);
+            Program._kelvinToFahrenheit.routines.push(CallbackRoutine.prepareAddSub('cncsub273', 273));
+            Program._kelvinToFahrenheit.routines.push(new ModuleRoutine(Module.sub()));
+            Program._kelvinToFahrenheit.routines.push(CallbackRoutine.prepareMulDiv('cncmul9', 9));
+            Program._kelvinToFahrenheit.routines.push(new ModuleRoutine(Module.mul()));
+            Program._kelvinToFahrenheit.routines.push(CallbackRoutine.prepareMulDiv('cncdiv5', 5));
+            Program._kelvinToFahrenheit.routines.push(new ModuleRoutine(Module.div()));
+            Program._kelvinToFahrenheit.routines.push(CallbackRoutine.prepareAddSub('cncadd32', 32));
+            Program._kelvinToFahrenheit.routines.push(new ModuleRoutine(Module.add()));
+        }
+        return Program._kelvinToFahrenheit;
+    }
+
+    static _fahrenheitToKelvin = null;
+    static fahrenheitToKelvin() {
+        if (Program._fahrenheitToKelvin === null) {
+            Program._fahrenheitToKelvin = new Program('FahrenheitToKelvin', /^[+-]1+$/);
+            Program._fahrenheitToKelvin.routines.push(CallbackRoutine.prepareAddSub('cncsub32', 32));
+            Program._fahrenheitToKelvin.routines.push(new ModuleRoutine(Module.sub()));
+            Program._fahrenheitToKelvin.routines.push(CallbackRoutine.prepareMulDiv('cncmul5', 5));
+            Program._fahrenheitToKelvin.routines.push(new ModuleRoutine(Module.mul()));
+            Program._fahrenheitToKelvin.routines.push(CallbackRoutine.prepareMulDiv('cncdiv9', 9));
+            Program._fahrenheitToKelvin.routines.push(new ModuleRoutine(Module.div()));
+            Program._fahrenheitToKelvin.routines.push(CallbackRoutine.prepareAddSub('cncadd273', 273));
+            Program._fahrenheitToKelvin.routines.push(new ModuleRoutine(Module.add()));
+        }
+        return Program._fahrenheitToKelvin;
+    }
+
+}
+
+export class Routine {
+
+    constructor() {
+        this.callback = function() {};
+        this.type = 'unknown';
+        this.name = 'unnamed';
+        this.running = false;
+    }
+
+    execute(program) {
+        this.running = true;
+        for (let callback of program.onRoutineExecute) {
+            callback(this);
+        }
+    }
+
+    clock(program) {
+        for (let callback of program.onRoutineClock) {
+            callback(this);
+        }
+        this.callback(program, this);
+    }
+
+}
+
+export class CallbackRoutine extends Routine {
+
+    constructor(name, step) {
+        super();
+        this.name = 'callback:' + name;
+        this.step = step;
+        this.type = 'callback';
+        this.callback = (function(program, routine) {
+            for (let callback of program.onChangeState) {
+                callback(null, null);
+            }
+            for (let callback of program.onBeforeTransition) {
+                callback(null);
+            }
+            this.step(program, routine);
+            for (let callback of program.onAfterTransition) {
+                callback(null);
+            }
+        }).bind(this);
+    }
+
+    static prepareAddSub(name, rhs) {
+        return new CallbackRoutine(name, function(program, routine) {
+            let tape = program.tape.toString() + '#';
+            for (let i = 0; i < rhs; i++) {
+                tape += '1';
+            }
+            tape = tape[0] + '+' + ' ' + tape.substring(1);
+            program.setTape(Tape.fromString(tape));
+            program.setHead(0);
+            routine.running = false;
+        });
+    }
+
+    static prepareMulDiv(name, rhs) {
+        return new CallbackRoutine(name, function(program, routine) {
+            let tape = program.tape.toString() + '#';
+            for (let i = 0; i < rhs; i++) {
+                tape += '1';
+            }
+            tape = tape[0] + '+' + tape.substring(1) + '#';
+            program.setTape(Tape.fromString(tape));
+            program.setHead(0);
+            routine.running = false;
+        });
+    }
+
+}
+
+export class ModuleRoutine extends Routine {
+
+    constructor(module) {
+        super();
+        this.name = 'module:' + module.name;
+        this.type = 'module';
+        this.module = module;
+        this.callback = (function(program, routine) {
+            if (this.state === null) {
+                this.state = module.start;
+            }
+            if (!this.halted(program)) {
+                let t = this.transition(program);
+
+                for (let callback of program.onBeforeTransition) {
+                    callback(t);
+                }
+
+                program.tape.replace(program.head, t.replace);
+
+                switch (t.move) {
+                case 'left':
+                    program.setHead(program.head - 1);
+                    break;
+                case 'right':
+                    program.setHead(program.head + 1);
+                    break;
+                }
+
+                this.setState(program, t.next);
+
+                for (let callback of program.onAfterTransition) {
+                    callback(t);
+                }
+            } else {
+                this.running = false;
+            }
+        }).bind(this);
+
+        this.state = null;
+    }
+
+    setState(program, state) {
+        let previous = this.state;
+        this.state = state;
+        let next = this.state;
+        for (let callback of program.onChangeState) {
+            callback(previous, next);
+        }
+    }
+
+    transition(program) {
         let cur = this.state;
-        let read = this.read();
+        let read = program.read();
         return this.module.transition(cur, read);
     }
 
-    halted() {
-        return this.transition() === null;
-    }
-
-    step() {
-        if (!this.halted()) {
-            let t = this.transition();
-
-            for (let callback of this.onBeforeTransition) {
-                callback(t);
-            }
-
-            this.tape.replace(this.head, t.replace);
-
-            switch (t.move) {
-            case 'left':
-                this.setHead(this.head - 1);
-                break;
-            case 'right':
-                this.setHead(this.head + 1);
-                break;
-            }
-
-            this.setState(t.next);
-
-            for (let callback of this.onAfterTransition) {
-                callback(t);
-            }
-        }
+    halted(program) {
+        return this.transition(program) === null;
     }
 
 }
@@ -123,6 +432,11 @@ export class Tape {
     }
 
     replace(position, symbol) {
+        if (symbol === null) {
+            this.cells.delete(position);
+            return;
+        }
+
         this.cells.set(position, symbol);
     }
 
@@ -156,7 +470,7 @@ export class Tape {
             if (symbol !== null) {
                 contents += symbol;
             } else {
-                contents += '.';
+                contents += ' ';
             }
         }
         return contents;
@@ -165,7 +479,7 @@ export class Tape {
     static fromString(input) {
         let tape = new Tape();
         for (let i = 0; i < input.length; i++) {
-            if (input[i] !== ' ') {
+            if ((input[i] !== ' ') && (input[i] !== "\n")) {
                 tape.replace(i, input[i]);
             }
         }

@@ -1,0 +1,183 @@
+; @module sub
+
+; @morphett
+0 * * * CHK1
+
+; @start CHK1
+
+;
+; CHK : check magnitude
+;
+
+CHK1 + _ R CHK2
+CHK1 - _ R CHK3
+
+CHK2 + _ R SUB0
+CHK2 - _ R ADD0
+
+CHK3 + _ R ADD1
+CHK3 - _ R SUB1
+
+ADD0 _ _ R ADP0
+ADD1 _ _ R ADN0
+SUB0 _ _ R SBR0
+SUB1 _ _ R SBL0
+
+;
+; ADP: positive addition
+;
+
+ADP0 1 _ R ADP1
+ADP0 # + R HALT
+
+ADP1 1 1 R ADP1
+ADP1 # # R ADP2
+
+ADP2 1 1 R ADP2
+ADP2 _ 1 L ADP3
+
+ADP3 1 1 L ADP3
+ADP3 # # L ADP4
+
+ADP4 1 1 L ADP4
+ADP4 _ _ R ADP0
+
+
+;
+; ADN: negative addition
+;
+
+ADN0 1 _ R ADN1
+ADN0 # - R HALT
+
+ADN1 1 1 R ADN1
+ADN1 # # R ADN2
+
+ADN2 1 1 R ADN2
+ADN2 _ 1 L ADN3
+
+ADN3 1 1 L ADN3
+ADN3 # # L ADN4
+
+ADN4 1 1 L ADN4
+ADN4 _ _ R ADN0
+
+;
+; SBR : subtract right (positive minus negative)
+;
+
+SBR0 1 X R SBR1
+SBR0 # # R SBR5
+
+SBR1 1 1 R SBR1
+SBR1 # # R SBR2
+
+SBR2 X X R SBR2
+SBR2 1 X L SBR3
+SBR2 _ _ L SBR9
+
+; lhs is greater
+
+SBR3 X X L SBR3
+SBR3 # # L SBR4
+
+SBR4 1 1 L SBR4
+SBR4 X X R SBR0
+
+SBR5 X X R SBR5
+SBR5 1 1 L SBR6
+
+SBR6 X X L SBR6
+SBR6 # # L SBR6
+SBR6 _ _ R SBR7
+
+SBR7 X _ R SBR7
+SBR7 # _ R SBR7
+SBR7 1 1 L SYN0
+SBR7 _ _ L SYN0
+
+; rhs is greater
+
+SBR9 X X L SBR9
+SBR9 # # L SBR10
+
+SBR10 1 1 L SBR10
+SBR10 X 1 L SBR11
+
+SBR11 X X L SBR11
+SBR11 _ _ R SBR12
+
+SBR12 X _ R SBR12
+SBR12 # _ R SBR12
+SBR12 1 1 R SBR12
+SBR12 _ _ L SBR13
+
+SBR13 _ _ L SBR13
+SBR13 1 1 L SYP0
+
+;
+; SBL : subtract left (negative minus positive)
+;
+
+SBL0 1 X R SBL1
+SBL0 # # R SBL5
+
+SBL1 1 1 R SBL1
+SBL1 # # R SBL2
+
+SBL2 X X R SBL2
+SBL2 1 X L SBL3
+SBL2 _ _ L SBL9
+
+; rhs is greater
+
+SBL3 X X L SBL3
+SBL3 # # L SBL4
+
+SBL4 1 1 L SBL4
+SBL4 X X R SBL0
+
+SBL5 X X R SBL5
+SBL5 1 1 L SBL6
+
+SBL6 X X L SBL6
+SBL6 # # L SBL6
+SBL6 _ _ R SBL7
+
+SBL7 X _ R SBL7
+SBL7 # _ R SBL7
+SBL7 1 1 L SYP0
+SBL7 _ _ L SYP0
+
+; lhs is greater
+
+SBL9 X X L SBL9
+SBL9 # # L SBL10
+
+SBL10 1 1 L SBL10
+SBL10 X 1 L SBL11
+
+SBL11 X X L SBL11
+SBL11 _ _ R SBL12
+
+SBL12 X _ R SBL12
+SBL12 # _ R SBL12
+SBL12 1 1 R SBL12
+SBL12 _ _ L SBL13
+
+SBL13 _ _ L SBL13
+SBL13 1 1 L SYN0
+
+;
+; SYP : print positive symbol
+;
+
+SYP0 1 1 L SYP0
+SYP0 _ + R HALT
+
+;
+; SYN : print negative symbol
+;
+
+SYN0 1 1 L SYN0
+SYN0 _ - R HALT

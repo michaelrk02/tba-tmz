@@ -43,10 +43,39 @@ h6 { @apply text-lg; }
     @apply inline-block p-2;
     @apply bg-tertiary text-dark font-bold;
     @apply rounded shadow;
-    @apply hover:bg-tertiary/80 active:bg-tertiary/60;
+    @apply hover:opacity-80 active:opacity-60 disabled:opacity-60;
 }
 
 .tmz-button-toggled {
     @apply bg-tertiary/80;
+}
+
+.tmz-input {
+    @apply tmz-display;
+    @apply w-full;
+    @apply disabled:opacity-60;
+}
+
+.tmz-select {
+    @apply w-full p-2;
+    @apply bg-tertiary text-dark font-bold;
+    @apply rounded shadow;
+    @apply hover:opacity-80 disabled:opacity-60;
+}
+
+.tmz-table {
+    @apply border-collapse;
+}
+
+.tmz-table th, .tmz-table td {
+    @apply border-solid border-2;
+}
+
+.tmz-table tr {
+    @apply text-center;
+}
+
+.tmz-table th {
+    @apply font-bold;
 }
 

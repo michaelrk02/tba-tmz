@@ -4,8 +4,13 @@ const webpack = require('webpack');
 module.exports = {
     entry: './src/index.js',
     mode: 'development',
+    devtool: 'inline-source-map',
     module: {
         rules: [
+            {
+                test: /\.tmz$/,
+                type: 'asset/source'
+            },
             {
                 test: /\.jsx?$/,
                 exclude: /(node_modules)/,

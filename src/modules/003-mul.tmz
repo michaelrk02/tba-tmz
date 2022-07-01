@@ -1,0 +1,94 @@
+; @module mul
+
+; @morphett
+0 * * * CHK1
+
+; @start CHK1
+
+;
+; CHK : check magnitude
+;
+
+CHK1 + _ R CHK2
+CHK1 - _ R CHK3
+
+CHK2 + _ R POS0
+CHK2 - _ R NEG0
+
+CHK3 + _ R NEG0
+CHK3 - _ R POS0
+
+;
+; POS : positive result
+;
+
+POS0 1 1 R POS0
+POS0 # # R POS0
+POS0 _ + L SET0
+
+;
+; NEG : negative result
+;
+
+NEG0 1 1 R NEG0
+NEG0 # # R NEG0
+NEG0 _ - L SET0
+
+;
+; SET : initial setup
+;
+
+SET0 1 1 L SET0
+SET0 # # L SET0
+SET0 _ _ R MUL1
+
+;
+; MUL : perform multiplication
+;
+
+MUL1 1 _ R MUL2
+MUL1 # _ R ZER0
+
+MUL2 1 1 R MUL2
+MUL2 # # R MUL4
+
+MUL3 1 1 L MUL3
+MUL3 _ _ R MUL1
+MUL3 # # L MUL9
+
+MUL9 _ _ R MUL10
+MUL9 1 1 L MUL3
+
+MUL10 # _ R MUL10
+MUL10 1 _ R MUL10
+MUL10 + + * HALT
+MUL10 - - * HALT
+
+MUL4 # # L MUL3
+MUL4 1 _ R MUL5
+
+MUL5 1 1 R MUL5
+MUL5 # # R MUL6
+
+MUL6 + + R MUL6
+MUL6 - - R MUL6
+MUL6 1 1 R MUL6
+MUL6 _ 1 L MUL7
+
+MUL7 1 1 L MUL7
+MUL7 + + L MUL7
+MUL7 - - L MUL7
+MUL7 # # L MUL8
+
+MUL8 1 1 L MUL8
+MUL8 _ 1 R MUL4
+
+;
+; ZER : zero result
+;
+
+ZER0 1 _ R ZER0
+ZER0 # _ R ZER0
+ZER0 + + * HALT
+ZER0 - - * HALT
+
