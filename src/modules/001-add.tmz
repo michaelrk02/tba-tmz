@@ -63,7 +63,7 @@ ADN4 1 1 L ADN4
 ADN4 _ _ R ADN0
 
 ;
-; SBR : subtract right (positive minus negative)
+; SBR : subtract right (positive plus negative)
 ;
 
 SBR0 1 X R SBR1
@@ -76,7 +76,7 @@ SBR2 X X R SBR2
 SBR2 1 X L SBR3
 SBR2 _ _ L SBR9
 
-; lhs is greater
+; rhs is greater
 
 SBR3 X X L SBR3
 SBR3 # # L SBR4
@@ -96,7 +96,7 @@ SBR7 # _ R SBR7
 SBR7 1 1 L SYN0
 SBR7 _ _ L SYN0
 
-; rhs is greater
+; lhs is greater
 
 SBR9 X X L SBR9
 SBR9 # # L SBR10
@@ -116,7 +116,7 @@ SBR13 _ _ L SBR13
 SBR13 1 1 L SYP0
 
 ;
-; SBL : subtract left (negative minus positive)
+; SBL : subtract left (negative plus positive)
 ;
 
 SBL0 1 X R SBL1

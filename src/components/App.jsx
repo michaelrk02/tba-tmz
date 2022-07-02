@@ -389,7 +389,10 @@ export default class App extends React.Component {
     }
 
     onReset() {
-        this.reset();
+        if (confirm('Are you sure to reset the program?')) {
+            this.reset();
+            alert('Program has been reset');
+        }
     }
 
     onPause() {

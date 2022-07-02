@@ -1,0 +1,9 @@
+Teknologi: ReactJS + Tailwind CSS
+Prasyarat: NodeJS + NPM
+
+Langkah-langkah:
+1. Clone repository ini
+2. Jalankan perintah `npm install`
+3. Jalankan perintah `npx webpack`
+4. App dapat dibuka pada "public/index.html"
+

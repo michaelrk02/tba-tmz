@@ -213,7 +213,7 @@ export default class Program {
     static kelvinToCelcius() {
         if (Program._kelvinToCelcius === null) {
             Program._kelvinToCelcius = new Program('KelvinToCelcius', /^[+-]1+$/);
-            Program._celciusToKelvin.routines.push(CallbackRoutine.prepareAddSub('cncsub273', 273));
+            Program._kelvinToCelcius.routines.push(CallbackRoutine.prepareAddSub('cncsub273', 273));
             Program._kelvinToCelcius.routines.push(new ModuleRoutine(Module.sub()));
         }
         return Program._kelvinToCelcius;
